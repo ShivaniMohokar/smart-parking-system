@@ -53,16 +53,17 @@ void initialize() {
         graph.push_back({});
     }
 
+    // Example road connections between locations (weights in km)
     graph[0].push_back({1, 1});
     graph[1].push_back({0, 1});
     graph[2].push_back({3, 2});
     graph[3].push_back({2, 2});
-    graph[4].push_back({5, 0.5});
-    graph[5].push_back({4, 0.5});
+    graph[4].push_back({5, 1});
+    graph[5].push_back({4, 1});
     graph[6].push_back({7, 1});
     graph[7].push_back({6, 1});
-    graph[8].push_back({9, 1.5});
-    graph[9].push_back({8, 1.5});
+    graph[8].push_back({9, 2});
+    graph[9].push_back({8, 2});
 
     for (int i = 0; i < locations.size(); ++i) {
         vector<ParkingSlot> slots;
@@ -171,16 +172,42 @@ void bookParking() {
     cin >> start;
     start--;
 
-    displaySlotStatus(start);
+    // Run Dijkstra for distance calculations
+    vector<int> dist = dijkstra(start);
+
+    // Check if slots available at chosen location
     bool slotAvailable = false;
     for (auto &slot : parkingSlots[start])
         if (slot.available) slotAvailable = true;
 
     if (!slotAvailable) {
         cout << "\n\033[31mNo available slots at " << locations[start] << ".\033[0m\n";
+
+        // Suggest nearest alternative
+        int bestLoc = -1, bestDist = INT_MAX;
+        for (int i = 0; i < locations.size(); i++) {
+            if (i == start) continue;
+            for (auto &slot : parkingSlots[i]) {
+                if (slot.available && dist[i] < bestDist) {
+                    bestLoc = i;
+                    bestDist = dist[i];
+                    break;
+                }
+            }
+        }
+
+        if (bestLoc != -1) {
+            cout << "Nearest available parking is at \033[32m"
+                 << locations[bestLoc] << "\033[0m ("
+                 << bestDist << " km away).\n";
+        } else {
+            cout << "Sorry, no slots available anywhere right now.\n";
+        }
         return;
     }
 
+    // Proceed with booking at chosen location
+    displaySlotStatus(start);
     int slot;
     cout << "Enter slot number to book (1-10): ";
     cin >> slot;
